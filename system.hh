@@ -5,6 +5,8 @@ class System
 {
 public:
   System();
+
+  simulate(double dt);
 };
 
 #endif // SYSTEM_HH
