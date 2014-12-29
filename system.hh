@@ -9,7 +9,9 @@ class System
 public:
   System();
 
+  void step(double dt);
   void simulate(double dt);
+  bool isCollision(Ball* a, Ball* b);
   void collision(Ball* a, Ball* b);
 
   double m;

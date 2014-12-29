@@ -11,7 +11,6 @@ public:
   Ball();
 
   Vec3 q;
-  QMatrix4x4 Mrot;
   QQuaternion Qrot;
 
   Vec3 torque;

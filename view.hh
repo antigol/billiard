@@ -18,7 +18,6 @@ public:
 
 private:
   void initializeGL();
-  void resizeGL(int w, int h);
   void paintGL();
   void draw(const QMatrix4x4& VP);
 

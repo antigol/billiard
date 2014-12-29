@@ -16,14 +16,10 @@ void View::initializeGL()
   //program.bindAttributeLocation("vertex_normal", 1);
   program.link();
 
-  sphere.initialize();
+  sphere.initialize(20, 10);
 
   time.start();
   startTimer(0);
-}
-
-void View::resizeGL(int w, int h)
-{
 }
 
 void View::paintGL()
@@ -32,24 +28,40 @@ void View::paintGL()
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   program.bind();
 
+  double aspect = 0.5*width() / height();
   P.setToIdentity();
-  P.perspective(40., 0.5*width() / height(), 0.01, 1000);
+  //P.perspective(40., 0.5*width() / height(), 0.01, 1000);
+  P.ortho(-10*aspect, 10*aspect, -10, 10, 0.01, 1000);
 
   QMatrix4x4 V;
 
   glViewport(0, 0, 0.5*width(), height());
-  V.lookAt(QVector3D(0,-15,0), QVector3D(0,0,0), QVector3D(0,0,1));
+  V.lookAt(QVector3D(0,-10,0), QVector3D(0,0,0), QVector3D(0,0,1));
   draw(P*V);
 
   glViewport(0.5*width(), 0, 0.5*width(), height());
   V.rotate(90, 1,0,0);
   draw(P*V);
 
+  glViewport(0, 0, width(), height());
+  program.setUniformValue("MVP", QMatrix4x4());
+  glBegin(GL_LINES);
+  program.setAttributeValue(0, 0, -1);
+  program.setAttributeValue(0, 0, 1);
+  glEnd();
+
+  /*
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glEnable(GL_MULTISAMPLE);
   QPainter p;
   p.begin(this);
+  p.setRenderHint(QPainter::Antialiasing);
   p.setPen(Qt::white);
-  p.drawLine(0.5 * width(), 0, 0.5 * width(), height());
+  p.setFont(QFont(QString::fromUtf8("DejaVu Sans Mono")));
+  p.drawText(QPointF(10.0, 20.0), "FRONT");
+  p.drawText(QPointF(10.0+0.5*width(), 20.0), "TOP");
   p.end();
+  */
 }
 
 void View::draw(const QMatrix4x4& VP)

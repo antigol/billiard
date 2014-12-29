@@ -10,7 +10,7 @@ int main(int argc, char* argv[])
   QApplication a(argc, argv);
 
   System s;
-  s.R = 1;
+  s.R = 2;
   s.m = 1;
   s.I = 2./5. * s.m * s.R*s.R;
 
@@ -23,14 +23,15 @@ int main(int argc, char* argv[])
 
   Ball b2 = b1;
   b2.L = Vec3(0,0,0);
-  b2.q = Vec3(3,1.5,0);
-  b2.p = Vec3(-2,0,0);
+  b2.q = Vec3(10, 0, 1);
+  b2.p = Vec3(-5,0,0);
 
   s.balls.push_back(b2);
 
   View w;
   w.system = &s;
   w.show();
+  w.showFullScreen();
 
   return a.exec();
 }
