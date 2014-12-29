@@ -10,7 +10,8 @@ SOURCES += \
     system.cc \
     glsphere.cc \
     ball.cc \
-    wall.cc
+    wall.cc \
+    vec3.cc
 
 RESOURCES += \
     resource.qrc
@@ -20,4 +21,6 @@ HEADERS += \
     system.hh \
     glsphere.hh \
     ball.hh \
-    wall.hh
+    wall.hh \
+    vec3.hh \
+    random.hh

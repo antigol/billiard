@@ -1,7 +1,8 @@
 #ifndef BALL_HH
 #define BALL_HH
 
-#include <QVector3D>
+#include "vec3.hh"
+#include <QMatrix4x4>
 #include <QQuaternion>
 
 class Ball
@@ -9,16 +10,15 @@ class Ball
 public:
   Ball();
 
-  void move(double dt);
+  Vec3 q;
+  QMatrix4x4 Mrot;
+  QQuaternion Qrot;
 
-  QVector3D position;
-  QQuaternion rotation;
+  Vec3 torque;
+  Vec3 force;
 
-  QVector3D torque;
-  QVector3D force;
-
-  QVector3D omega;
-  QVector3D velocity;
+  Vec3 L;
+  Vec3 p;
 };
 
 #endif // BALL_HH
