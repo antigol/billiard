@@ -51,6 +51,7 @@ void View::paintGL()
 
   glViewport(0, 0, width(), height());
   program.setUniformValue("MVP", QMatrix4x4());
+  program.setUniformValue("Mn", QMatrix4x4().normalMatrix());
   glBegin(GL_LINES);
   program.setAttributeValue(1, 0, 0, 1);
   program.setAttributeValue(0, 0, -1);
