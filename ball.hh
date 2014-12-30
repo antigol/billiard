@@ -5,11 +5,8 @@
 #include <QMatrix4x4>
 #include <QQuaternion>
 
-class Ball
+struct Ball
 {
-public:
-  Ball();
-
   Vec3 q;
   QQuaternion Qrot;
 

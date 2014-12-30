@@ -13,10 +13,10 @@ void View::initializeGL()
   program.addShaderFromSourceFile(QGLShader::Vertex, ":/simple.vert");
   program.addShaderFromSourceFile(QGLShader::Fragment, ":/simple.frag");
   program.bindAttributeLocation("vertex_position", 0);
-  //program.bindAttributeLocation("vertex_normal", 1);
+  program.bindAttributeLocation("vertex_normal", 1);
   program.link();
 
-  sphere.initialize(20, 10);
+  sphere.initialize(30, 30);
 
   time.start();
   startTimer(0);
@@ -25,13 +25,19 @@ void View::initializeGL()
 void View::paintGL()
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  glPolygonMode(GL_FRONT, GL_FILL);
+  glPolygonMode(GL_BACK, GL_LINE);
+  glEnable(GL_DEPTH_TEST);
+  glDisable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
   program.bind();
 
   double aspect = 0.5*width() / height();
   P.setToIdentity();
   //P.perspective(40., 0.5*width() / height(), 0.01, 1000);
   P.ortho(-10*aspect, 10*aspect, -10, 10, 0.01, 1000);
+
+  program.setUniformValue("l", 0, 0, 1);
 
   QMatrix4x4 V;
 
@@ -46,6 +52,7 @@ void View::paintGL()
   glViewport(0, 0, width(), height());
   program.setUniformValue("MVP", QMatrix4x4());
   glBegin(GL_LINES);
+  program.setAttributeValue(1, 0, 0, 1);
   program.setAttributeValue(0, 0, -1);
   program.setAttributeValue(0, 0, 1);
   glEnd();
@@ -78,8 +85,16 @@ void View::draw(const QMatrix4x4& VP)
     M.scale(system->R);
 
     program.setUniformValue("MVP", VP*M);
-    sphere.draw(program, 0);
-  }
+    program.setUniformValue("Mn", M.normalMatrix());
+    sphere.bind();
+    program.setAttributeBuffer(0, GL_FLOAT, 0, 3, 0);
+    program.setAttributeBuffer(1, GL_FLOAT, 0, 3, 0);
+    program.enableAttributeArray(0);
+    program.enableAttributeArray(1);
+    sphere.drawElements();
+    program.disableAttributeArray(0);
+    program.disableAttributeArray(1);
+    sphere.release();  }
 }
 
 void View::timerEvent(QTimerEvent*)

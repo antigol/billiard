@@ -1,15 +1,12 @@
 #ifndef WALL_HH
 #define WALL_HH
 
-#include <QVector3D>
+#include "vec3.hh"
 
-class Wall
+struct Wall
 {
-public:
-  Wall();
-
-  QVector3D point;
-  QVector3D normal;
+  Vec3 p;
+  Vec3 n;
 };
 
 #endif // WALL_HH
