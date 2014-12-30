@@ -57,6 +57,16 @@ Vec3 &Vec3::operator/=(double a)
   return *this;
 }
 
+Vec3 Vec3::operator+()
+{
+  return *this;
+}
+
+Vec3 Vec3::operator-()
+{
+  return Vec3(-_d[0], -_d[1], -_d[2]);
+}
+
 void Vec3::setNull()
 {
   _d[0] = _d[1] = _d[2] = 0.0;
@@ -96,4 +106,10 @@ Vec3 Vec3::random(double L)
   double psi = rdm::uniformd(0.0, 2*M_PI);
   double r = sqrt(L*L - z*z);
   return Vec3(r * cos(psi), r * sin(psi), z);
+}
+
+
+std::ostream&operator<<(std::ostream& out, const Vec3& a)
+{
+  return out << "[" << a[0] << "," << a[1] << "," << a[2] << "]";
 }

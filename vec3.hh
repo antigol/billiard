@@ -1,6 +1,8 @@
 #ifndef VEC3_HH
 #define VEC3_HH
 
+#include <ostream>
+
 class Vec3
 {
 public:
@@ -14,6 +16,9 @@ public:
 	Vec3 &operator-=(const Vec3& a);
 	Vec3 &operator*=(double a);
 	Vec3 &operator/=(double a);
+
+    Vec3 operator+();
+    Vec3 operator-();
 
 	void setNull();
 	bool isNull() const;
@@ -32,5 +37,7 @@ inline Vec3 operator-(Vec3 a, const Vec3& b) { return a -= b; }
 inline Vec3 operator*(Vec3 a, double b) { return a *= b; }
 inline Vec3 operator*(double a, Vec3 b) { return b *= a; }
 inline Vec3 operator/(Vec3 a, double b) { return a /= b; }
+
+std::ostream& operator<<(std::ostream& out, const Vec3& a);
 
 #endif // VEC3_HH

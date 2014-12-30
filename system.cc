@@ -1,5 +1,6 @@
 #include "system.hh"
 #include <QDebug>
+#include <iostream>
 
 using namespace std;
 
@@ -10,27 +11,73 @@ System::System()
 void System::step(double dt)
 {
   for (uint i = 0; i < balls.size(); ++i) {
-    Ball& b = balls[i];
+    Ball* a = &balls[i];
 
-    b.q += b.p / m * dt;
+    Vec3 g = Vec3(0, 0, -10);
 
-    double angle = Vec3::length(b.L) / I * dt * 180./M_PI;
-    b.Qrot = QQuaternion::fromAxisAndAngle(b.L[0], b.L[1], b.L[2], angle) * b.Qrot;
+    for (uint j = 0; j < walls.size(); ++j) {
+      Wall* w = &walls[j];
+      Vec3 d = a->q - w->p;
+      if (Vec3::dot(d, w->n) - R < 1e-5) {
+
+
+        Vec3 v = a->p / m + Vec3::cross(a->L / I, -w->n * R);
+        //std::cout << a->p/m << std::endl;
+        //std::cout << v << std::endl;
+        if (Vec3::length(v) < 5e-3) {
+          // static force
+
+        } else {
+          //qDebug() << "cinetic force";
+          Vec3 f = 0.8 * Vec3::dot(m * g, -w->n) * (-v / Vec3::length(v));
+          a->force += f;
+          a->torque += Vec3::cross(-w->n * R, f);
+        }
+
+        // slowing
+        if (Vec3::length(a->L) > 0) {
+          //qDebug() << "slowing force";
+          //Vec3 f = 0.05 * Vec3::dot(m * g, -w->n) * (-a->p / Vec3::length(a->p));
+          //a->force += f;
+          //a->torque += Vec3::cross(w->n * R, f); // to maintain v
+          a->torque += -0.3 * Vec3::dot(m * g, -w->n) * a->L / Vec3::length(a->L);
+        }
+      }
+    }
+    a->force += m * g;
+
+    a->p += dt * a->force;
+    a->L += dt * a->torque;
+
+    a->q += a->p / m * dt;
+
+    double angle = Vec3::length(a->L) / I * dt * 180./M_PI;
+    a->Qrot = QQuaternion::fromAxisAndAngle(a->L[0], a->L[1], a->L[2], angle) * a->Qrot;
+
+    a->force.setNull();
+    a->torque.setNull();
   }
 }
 
 void System::simulate(double dt)
 {
+
   double ddt = 1e-5 * dt;
 
   for (uint i = 0; i < balls.size(); ++i) {
     Ball* a = &balls[i];
     for (uint j = i+1; j < balls.size(); ++j) {
       Ball* b = &balls[j];
-      while (isCollision(a, b)) {
-        collision(a, b);
+      while (is_collision_ball(a, b)) {
+        collision_ball(a, b);
         step(ddt);
         dt -= ddt;
+      }
+    }
+    for (uint j = 0; j < walls.size(); ++j) {
+      Wall* w = &walls[j];
+      if (is_collision_wall(a, w)) {
+        collision_wall(a, w);
       }
     }
   }
@@ -38,13 +85,19 @@ void System::simulate(double dt)
   step(dt);
 }
 
-bool System::isCollision(Ball* a, Ball* b)
+bool System::is_collision_ball(Ball* a, Ball* b)
 {
   Vec3 n = a->q - b->q;
   return Vec3::length(a->q - b->q) < 2.*R && Vec3::dot(n, a->p * m - b->p * m) < 0.0;
 }
 
-void System::collision(Ball* a, Ball* b)
+bool System::is_collision_wall(Ball* a, Wall* w)
+{
+  Vec3 d = a->q - w->p;
+  return Vec3::dot(d, w->n) < R && Vec3::dot(a->p, w->n) < 0.;
+}
+
+void System::collision_ball(Ball* a, Ball* b)
 {
   static int count = 0;
   count++;
@@ -78,4 +131,26 @@ void System::collision(Ball* a, Ball* b)
   Vec3 dL = Vec3::cross(r, dp);
   a->L = a->L - dL;
   b->L = b->L - dL;
+}
+
+void System::collision_wall(Ball* a, Wall* w)
+{
+  static int count = 0;
+  count++;
+  //if (count >= 2) return;
+  qDebug() << "collision wall" << count;
+
+  double p_perp = -Vec3::dot(a->p, w->n);
+
+  cout << p_perp << endl;
+
+  double cor = 0.5;
+  if (p_perp < 0.15) {
+    a->p = a->p + p_perp * w->n;
+    Vec3 d = a->q - w->p;
+    d -= Vec3::dot(d, w->n) * w->n;
+    a->q = w->p + d + w->n * R;
+  } else {
+    a->p = a->p + (1. + cor) * p_perp * w->n;
+  }
 }

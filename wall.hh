@@ -6,6 +6,11 @@
 struct Wall
 {
   Vec3 p;
+  Vec3 q;
+  Vec3 r;
+  Vec3 s;
+
+
   Vec3 n;
 };
 

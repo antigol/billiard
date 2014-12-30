@@ -34,15 +34,16 @@ void View::paintGL()
 
   double aspect = 0.5*width() / height();
   P.setToIdentity();
-  //P.perspective(40., 0.5*width() / height(), 0.01, 1000);
-  P.ortho(-10*aspect, 10*aspect, -10, 10, 0.01, 1000);
+  P.perspective(40., aspect, 0.01, 1000);
+
+  //P.ortho(-10*aspect, 10*aspect, -10, 10, 0, 1000);
 
   program.setUniformValue("l", 0, 0, 1);
 
   QMatrix4x4 V;
 
   glViewport(0, 0, 0.5*width(), height());
-  V.lookAt(QVector3D(0,-10,0), QVector3D(0,0,0), QVector3D(0,0,1));
+  V.lookAt(QVector3D(0,-60,0), QVector3D(0,0,0), QVector3D(0,0,1));
   draw(P*V);
 
   glViewport(0.5*width(), 0, 0.5*width(), height());
@@ -52,6 +53,8 @@ void View::paintGL()
   glViewport(0, 0, width(), height());
   program.setUniformValue("MVP", QMatrix4x4());
   program.setUniformValue("Mn", QMatrix4x4().normalMatrix());
+  program.setUniformValue("phong", false);
+  program.setUniformValue("main_color", 0, 1, 0);
   glBegin(GL_LINES);
   program.setAttributeValue(1, 0, 0, 1);
   program.setAttributeValue(0, 0, -1);
@@ -77,6 +80,11 @@ void View::draw(const QMatrix4x4& VP)
   if (!system) return;
 
   QMatrix4x4 M;
+
+  program.setUniformValue("lw", 0.2f);
+  program.setUniformValue("line_color", 1, 0, 0);
+  program.setUniformValue("main_color", 1, 1, 0.8);
+  program.setUniformValue("phong", true);
   for (uint i = 0; i < system->balls.size(); ++i) {
     Ball* b = &system->balls[i];
 
@@ -95,7 +103,24 @@ void View::draw(const QMatrix4x4& VP)
     sphere.drawElements();
     program.disableAttributeArray(0);
     program.disableAttributeArray(1);
-    sphere.release();  }
+    sphere.release();
+  }
+
+  program.setUniformValue("lw", -1.f);
+  program.setUniformValue("main_color", 0.7, 0.6, 0.2);
+  program.setUniformValue("MVP", VP);
+  program.setUniformValue("Mn", QMatrix4x4().normalMatrix());
+  for (uint i = 0; i < system->walls.size(); ++i) {
+    Wall* w = &system->walls[i];
+
+    glBegin(GL_QUADS);
+    program.setAttributeValue(1, w->n[0], w->n[1], w->n[2]);
+    program.setAttributeValue(0, w->p[0], w->p[1], w->p[2]);
+    program.setAttributeValue(0, w->q[0], w->q[1], w->q[2]);
+    program.setAttributeValue(0, w->r[0], w->r[1], w->r[2]);
+    program.setAttributeValue(0, w->s[0], w->s[1], w->s[2]);
+    glEnd();
+  }
 }
 
 void View::timerEvent(QTimerEvent*)
