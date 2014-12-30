@@ -19,7 +19,9 @@ void System::step(double dt)
       Wall* w = &walls[j];
       Vec3 d = a->q - w->p;
       if (Vec3::dot(d, w->n) - R < 1e-5) {
-
+        Vec3 d = a->q - w->p;
+        d -= Vec3::dot(d, w->n) * w->n;
+        a->q = w->p + d + w->n * R;
 
         Vec3 v = a->p / m + Vec3::cross(a->L / I, -w->n * R);
         //std::cout << a->p/m << std::endl;
@@ -29,7 +31,7 @@ void System::step(double dt)
 
         } else {
           //qDebug() << "cinetic force";
-          Vec3 f = 0.8 * Vec3::dot(m * g, -w->n) * (-v / Vec3::length(v));
+          Vec3 f = 1.2 * Vec3::dot(m * g, -w->n) * (-v / Vec3::length(v));
           a->force += f;
           a->torque += Vec3::cross(-w->n * R, f);
         }
@@ -40,7 +42,7 @@ void System::step(double dt)
           //Vec3 f = 0.05 * Vec3::dot(m * g, -w->n) * (-a->p / Vec3::length(a->p));
           //a->force += f;
           //a->torque += Vec3::cross(w->n * R, f); // to maintain v
-          a->torque += -0.3 * Vec3::dot(m * g, -w->n) * a->L / Vec3::length(a->L);
+          a->torque += -0.2 * Vec3::dot(m * g, -w->n) * a->L / Vec3::length(a->L);
         }
       }
     }

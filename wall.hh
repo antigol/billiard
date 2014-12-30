@@ -5,6 +5,8 @@
 
 struct Wall
 {
+  Wall(Vec3 p, Vec3 q, Vec3 r);
+
   Vec3 p;
   Vec3 q;
   Vec3 r;

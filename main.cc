@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
   s.I = 2./5. * s.m * s.R*s.R;
 
   Ball b1;
-  b1.L = Vec3(15,1,0);
+  b1.L = Vec3(35,0,10);
   b1.p = Vec3(0,0,0);
   b1.q = Vec3(0,0,0);
 
@@ -35,19 +35,16 @@ int main(int argc, char* argv[])
 
   s.balls.push_back(b3);
 
-  Wall w1;
-  w1.n = Vec3(0,0,1);
-  w1.p = Vec3(-100,-100,-5);
-  w1.q = Vec3(+100,-100,-5);
-  w1.r = Vec3(+100,+100,-5);
-  w1.s = Vec3(-100,+100,-5);
-
+  Wall w1(Vec3(0,-100,-10), Vec3(+100,-100,0), Vec3(+100,+100,0));
   s.walls.push_back(w1);
+
+  Wall w2(Vec3(-100,-100,0), Vec3(0,-100,-10), Vec3(0,+100,-10));
+  s.walls.push_back(w2);
 
   View w;
   w.system = &s;
   w.show();
-  //w.showFullScreen();
+  w.showFullScreen();
 
   return a.exec();
 }
