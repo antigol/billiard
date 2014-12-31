@@ -104,7 +104,7 @@ void System::collision_ball(Ball* a, Ball* b)
   static int count = 0;
   count++;
   //if (count >= 2) return;
-  qDebug() << "collision" << count;
+  //qDebug() << "collision" << count;
 
   Vec3 vg = (a->p + b->p) / (2.0 * m);
   Vec3 p = a->p - m * vg;
@@ -140,11 +140,11 @@ void System::collision_wall(Ball* a, Wall* w)
   static int count = 0;
   count++;
   //if (count >= 2) return;
-  qDebug() << "collision wall" << count;
+  //qDebug() << "collision wall" << count;
 
   double p_perp = -Vec3::dot(a->p, w->n);
 
-  cout << p_perp << endl;
+  //cout << p_perp << endl;
 
   double cor = 0.5;
   if (p_perp < 0.15) {

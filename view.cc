@@ -8,8 +8,16 @@ View::View(QWidget *parent) :
   setAutoFillBackground(false);
 }
 
+View::~View()
+{
+  glDeleteFramebuffers(1, &frameBuffer);
+  glDeleteTextures(1, &depthTexture);
+}
+
 void View::initializeGL()
 {
+  initializeGLFunctions();
+
   program.addShaderFromSourceFile(QGLShader::Vertex, ":/simple.vert");
   program.addShaderFromSourceFile(QGLShader::Fragment, ":/simple.frag");
   program.bindAttributeLocation("vertex_position", 0);
@@ -18,21 +26,49 @@ void View::initializeGL()
 
   sphere.initialize(30, 30);
 
+
+  program_rtt.addShaderFromSourceFile(QGLShader::Vertex, ":/depthRTT.vert");
+  program_rtt.addShaderFromSourceFile(QGLShader::Fragment, ":/depthRTT.frag");
+  program_rtt.bindAttributeLocation("vertex_position", 0);
+  program_rtt.link();
+
+  glGenFramebuffers(1, &frameBuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+  glGenTextures(1, &depthTexture);
+  glBindTexture(GL_TEXTURE_2D, depthTexture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, 2048, 2048, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+  glDrawBuffer(GL_NONE);
+
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    qDebug("Erreur avec le frame buffer");
+
+
   time.start();
   startTimer(0);
 }
 
 void View::paintGL()
 {
+  if (!system) return;
+
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glPolygonMode(GL_FRONT, GL_FILL);
   glPolygonMode(GL_BACK, GL_LINE);
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
   glCullFace(GL_BACK);
+  glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
   program.bind();
 
-  double aspect = 0.5*width() / height();
+  double aspect = 1.*width() / height();
   P.setToIdentity();
   P.perspective(40., aspect, 0.01, 1000);
 
@@ -44,6 +80,9 @@ void View::paintGL()
 
   glViewport(0, 0, 0.5*width(), height());
   V.lookAt(QVector3D(0,-60,0), QVector3D(0,0,0), QVector3D(0,0,1));
+
+  drawShadow(P*V);
+  /*
   draw(P*V);
 
   glViewport(0.5*width(), 0, 0.5*width(), height());
@@ -60,25 +99,11 @@ void View::paintGL()
   program.setAttributeValue(0, 0, -1);
   program.setAttributeValue(0, 0, 1);
   glEnd();
-
-  /*
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  glEnable(GL_MULTISAMPLE);
-  QPainter p;
-  p.begin(this);
-  p.setRenderHint(QPainter::Antialiasing);
-  p.setPen(Qt::white);
-  p.setFont(QFont(QString::fromUtf8("DejaVu Sans Mono")));
-  p.drawText(QPointF(10.0, 20.0), "FRONT");
-  p.drawText(QPointF(10.0+0.5*width(), 20.0), "TOP");
-  p.end();
   */
 }
 
-void View::draw(const QMatrix4x4& VP)
+void View::draw(QGLShaderProgram& program, const QMatrix4x4& VP, const QMatrix4x4& VPdepth)
 {
-  if (!system) return;
-
   QMatrix4x4 M;
 
   program.setUniformValue("lw", 0.2f);
@@ -93,6 +118,7 @@ void View::draw(const QMatrix4x4& VP)
     M.rotate(b->Qrot);
     M.scale(system->R);
 
+    program.setUniformValue("DepthBiasMVP", VPdepth*M);
     program.setUniformValue("MVP", VP*M);
     program.setUniformValue("Mn", M.normalMatrix());
     sphere.bind();
@@ -108,6 +134,7 @@ void View::draw(const QMatrix4x4& VP)
 
   program.setUniformValue("lw", -1.f);
   program.setUniformValue("main_color", 0.7, 0.6, 0.2);
+  program.setUniformValue("DepthBiasMVP", VPdepth);
   program.setUniformValue("MVP", VP);
   program.setUniformValue("Mn", QMatrix4x4().normalMatrix());
   for (uint i = 0; i < system->walls.size(); ++i) {
@@ -121,6 +148,38 @@ void View::draw(const QMatrix4x4& VP)
     program.setAttributeValue(0, w->s[0], w->s[1], w->s[2]);
     glEnd();
   }
+}
+
+void View::drawShadow(const QMatrix4x4& VP)
+{
+  /*********************************************/
+  glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+  glViewport(0, 0, 2048, 2048);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  program_rtt.bind();
+
+  QMatrix4x4 depthVP;
+  depthVP.ortho(-50, 50, -50, 50, 0, 1000);
+  depthVP.lookAt(QVector3D(-20, 20, 100), QVector3D(0,0,0), QVector3D(0,1,0));
+
+  draw(program_rtt, depthVP);
+
+  /*********************************************/
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glViewport(0, 0, width(), height());
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  program.bind();
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, depthTexture);
+  program.setUniformValue("shadowMap", 0);
+
+  QMatrix4x4 bias(0.5, 0.0, 0.0, 0.5,
+                  0.0, 0.5, 0.0, 0.5,
+                  0.0, 0.0, 0.5, 0.5,
+                  0.0, 0.0, 0.0, 1.0);
+
+  draw(program, VP, bias * depthVP);
 }
 
 void View::timerEvent(QTimerEvent*)

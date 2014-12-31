@@ -10,12 +10,12 @@ int main(int argc, char* argv[])
   QApplication a(argc, argv);
 
   System s;
-  s.R = 2;
+  s.R = 1.5;
   s.m = 1;
   s.I = 2./5. * s.m * s.R*s.R;
 
   Ball b1;
-  b1.L = Vec3(35,0,10);
+  b1.L = Vec3(0,0,10);
   b1.p = Vec3(0,0,0);
   b1.q = Vec3(0,0,0);
 
@@ -35,11 +35,11 @@ int main(int argc, char* argv[])
 
   s.balls.push_back(b3);
 
-  Wall w1(Vec3(0,-100,-10), Vec3(+100,-100,0), Vec3(+100,+100,0));
+  Wall w1(Vec3(-50,-50,-10), Vec3(+50,-50,-10), Vec3(+50,+50,-10));
   s.walls.push_back(w1);
 
-  Wall w2(Vec3(-100,-100,0), Vec3(0,-100,-10), Vec3(0,+100,-10));
-  s.walls.push_back(w2);
+  //Wall w2(Vec3(-100,-100,0), Vec3(0,-100,-10), Vec3(0,+100,-10));
+  //s.walls.push_back(w2);
 
   View w;
   w.system = &s;
