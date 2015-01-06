@@ -28,15 +28,20 @@ void main(void)
     vec3 nv = normalize(n_V);
     vec3 nm = normalize(n_M);
 
-    float cosTheta = clamp(dot(nv, l), 0, 1);
-    float bias = 5e-5 * tan(acos(cosTheta));
+    float cosTheta = clamp(abs(dot(nv, l)), 0, 1);
+    float bias = 2e-4 * clamp(tan(acos(cosTheta)), 0.5, 3);
+    //bias = 1e-4;
+    /*if (bias <= 0) {
+        color = vec3(0, 1, 0);
+        return;
+    }*/
 
     vec3 s = vec3(shc.xy, (shc.z - bias) / shc.w);
 
     float visibility = 0.1;
 
     for (int i = 0; i < 9; ++i)
-        visibility += 0.1 * texture(shadowMap, s + vec3(1e-4 * rand2(gl_FragCoord), 0));
+        visibility += 0.1 * texture(shadowMap, s + vec3(2e-3 * cosTheta * rand2(gl_FragCoord), 0));
 
     if (phong) {
         vec3 c = main_color;
@@ -44,8 +49,8 @@ void main(void)
         if (any(lessThan(abs(nm), vec3(lw)))) {
             c = line_color;
         }
-        // clamp(dot(nv, l), 0.1, 1)
-        color = visibility * c;
+        //
+        color = visibility * c * clamp(dot(nv, l), 0.1, 1);
     } else {
         color = visibility * main_color;
     }

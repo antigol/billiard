@@ -8,6 +8,7 @@ uniform mat4 DepthBiasMVP;
 
 out vec3 n_V;
 out vec3 n_M;
+out vec3 e_V;
 out vec4 shc;
 
 void main(void)

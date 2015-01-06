@@ -72,32 +72,10 @@ void View::paintGL()
   P.setToIdentity();
   P.perspective(40., aspect, 0.01, 1000);
 
-  //P.ortho(-10*aspect, 10*aspect, -10, 10, 0, 1000);
-
   QMatrix4x4 V;
-
-  glViewport(0, 0, 0.5*width(), height());
-  V.lookAt(QVector3D(0,-60,0), QVector3D(0,0,0), QVector3D(0,0,1));
+  V.lookAt(QVector3D(0,-6,-6), QVector3D(0,0,-9), QVector3D(0,0,1));
 
   drawShadow(P*V);
-  /*
-  draw(P*V);
-
-  glViewport(0.5*width(), 0, 0.5*width(), height());
-  V.rotate(90, 1,0,0);
-  draw(P*V);
-
-  glViewport(0, 0, width(), height());
-  program.setUniformValue("MVP", QMatrix4x4());
-  program.setUniformValue("Mn", QMatrix4x4().normalMatrix());
-  program.setUniformValue("phong", false);
-  program.setUniformValue("main_color", 0, 1, 0);
-  glBegin(GL_LINES);
-  program.setAttributeValue(1, 0, 0, 1);
-  program.setAttributeValue(0, 0, -1);
-  program.setAttributeValue(0, 0, 1);
-  glEnd();
-  */
 }
 
 void View::draw(QGLShaderProgram& program, const QMatrix4x4& VP, const QMatrix4x4& VPdepth, bool wall)
@@ -158,14 +136,14 @@ void View::drawShadow(const QMatrix4x4& VP)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   program_rtt.bind();
 
-  QVector3D light(-2, 2, 10);
+  QVector3D light(0, 0, 1);
   light.normalize();
 
   QMatrix4x4 depthVP;
   depthVP.ortho(-50, 50, -50, 50, 0, 1000);
-  depthVP.lookAt(light * 100, QVector3D(0,0,0), QVector3D(0,1,0));
+  depthVP.lookAt(light * 50, QVector3D(0,0,0), QVector3D(0,1,0));
 
-  glCullFace(GL_FRONT);
+  //glCullFace(GL_FRONT);
   draw(program_rtt, depthVP, QMatrix4x4(), false);
 
   /*********************************************/
