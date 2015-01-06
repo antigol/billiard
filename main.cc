@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
   s.I = 2./5. * s.m * s.R*s.R;
 
   Ball b1;
-  b1.L = Vec3(0,0,10);
+  b1.L = Vec3(20,0,0);
   b1.p = Vec3(0,0,0);
   b1.q = Vec3(0,0,0);
 
@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
   View w;
   w.system = &s;
   w.show();
-  w.showFullScreen();
+  //w.showFullScreen();
 
   return a.exec();
 }

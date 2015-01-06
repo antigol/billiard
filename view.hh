@@ -21,7 +21,7 @@ public:
 private:
   void initializeGL();
   void paintGL();
-  void draw(QGLShaderProgram& program, const QMatrix4x4& VP, const QMatrix4x4& VPdepth = QMatrix4x4());
+  void draw(QGLShaderProgram& program, const QMatrix4x4& VP, const QMatrix4x4& VPdepth = QMatrix4x4(), bool wall = true);
   void drawShadow(const QMatrix4x4& VP);
 
   void timerEvent(QTimerEvent* e);

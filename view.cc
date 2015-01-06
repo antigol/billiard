@@ -59,10 +59,10 @@ void View::paintGL()
   if (!system) return;
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glPolygonMode(GL_FRONT, GL_FILL);
-  glPolygonMode(GL_BACK, GL_LINE);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  //glPolygonMode(GL_BACK, GL_LINE);
   glEnable(GL_DEPTH_TEST);
-  glDisable(GL_CULL_FACE);
+  glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
   glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
@@ -73,8 +73,6 @@ void View::paintGL()
   P.perspective(40., aspect, 0.01, 1000);
 
   //P.ortho(-10*aspect, 10*aspect, -10, 10, 0, 1000);
-
-  program.setUniformValue("l", 0, 0, 1);
 
   QMatrix4x4 V;
 
@@ -102,7 +100,7 @@ void View::paintGL()
   */
 }
 
-void View::draw(QGLShaderProgram& program, const QMatrix4x4& VP, const QMatrix4x4& VPdepth)
+void View::draw(QGLShaderProgram& program, const QMatrix4x4& VP, const QMatrix4x4& VPdepth, bool wall)
 {
   QMatrix4x4 M;
 
@@ -132,6 +130,7 @@ void View::draw(QGLShaderProgram& program, const QMatrix4x4& VP, const QMatrix4x
     sphere.release();
   }
 
+  if (wall) {
   program.setUniformValue("lw", -1.f);
   program.setUniformValue("main_color", 0.7, 0.6, 0.2);
   program.setUniformValue("DepthBiasMVP", VPdepth);
@@ -148,6 +147,7 @@ void View::draw(QGLShaderProgram& program, const QMatrix4x4& VP, const QMatrix4x
     program.setAttributeValue(0, w->s[0], w->s[1], w->s[2]);
     glEnd();
   }
+  }
 }
 
 void View::drawShadow(const QMatrix4x4& VP)
@@ -158,17 +158,22 @@ void View::drawShadow(const QMatrix4x4& VP)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   program_rtt.bind();
 
+  QVector3D light(-2, 2, 10);
+  light.normalize();
+
   QMatrix4x4 depthVP;
   depthVP.ortho(-50, 50, -50, 50, 0, 1000);
-  depthVP.lookAt(QVector3D(-20, 20, 100), QVector3D(0,0,0), QVector3D(0,1,0));
+  depthVP.lookAt(light * 100, QVector3D(0,0,0), QVector3D(0,1,0));
 
-  draw(program_rtt, depthVP);
+  glCullFace(GL_FRONT);
+  draw(program_rtt, depthVP, QMatrix4x4(), false);
 
   /*********************************************/
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glViewport(0, 0, width(), height());
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   program.bind();
+  program.setUniformValue("l", light);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, depthTexture);
@@ -179,6 +184,7 @@ void View::drawShadow(const QMatrix4x4& VP)
                   0.0, 0.0, 0.5, 0.5,
                   0.0, 0.0, 0.0, 1.0);
 
+  glCullFace(GL_BACK);
   draw(program, VP, bias * depthVP);
 }
 
